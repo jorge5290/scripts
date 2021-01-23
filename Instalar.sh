@@ -37,3 +37,4 @@ sudo chmod a+x /usr/local/HomeSeer/autostart_hs
 
 
 echo "Proceso Completado"
+exit
