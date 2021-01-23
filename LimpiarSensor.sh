@@ -8,3 +8,5 @@ do
 	sleep 0.1
 	echo $i
 done
+exit
+
