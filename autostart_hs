@@ -1,5 +1,6 @@
 #!/bin/sh
 export LANG=en_US.UTF-8
+bash /usr/local/HomeSeer/scripts/LimpiarSensor.sh &
 cd /usr/local/HomeSeer
 mono HSConsole.exe
 
