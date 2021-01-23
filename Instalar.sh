@@ -1,5 +1,4 @@
 #!/bin/bash
-sudo su
 wget https://raw.githubusercontent.com/jorge5290/scripts/main/KodiOff.exp -q -O- | tr -d '\r' >/usr/local/HomeSeer/scripts/KodiOff.exp 
 [ $? -eq 0 ] && echo "KodiOff.exp Copiado" || echo "KodiOff.exp Error"
 wget https://raw.githubusercontent.com/jorge5290/scripts/main/LimpiarSensor.sh -q -O- | tr -d '\r' >/usr/local/HomeSeer/scripts/LimpiarSensor.sh 
