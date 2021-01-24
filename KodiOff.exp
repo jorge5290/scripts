@@ -1,6 +1,7 @@
 #!/usr/bin/expect -f
 set Host [lindex $argv 0]
-spawn ssh root@$Host shutdown -h now
+set Orden [lindex $argv 1]
+spawn ssh root@$Host $Orden
 match_max 100000
 expect {
         "yes/no" {
@@ -11,4 +12,3 @@ expect {
 }
 
 expect eof
-
