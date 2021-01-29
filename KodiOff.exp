@@ -4,9 +4,9 @@ set Orden [lindex $argv 1]
 
 if { $Orden == "APAGAR" } {
 spawn ssh root@$Host shutdown -h now
-} elseif { $Orden == "TV ON" } {
+} elseif { $Orden == "TVON" } {
 spawn ssh root@$Host echo 'on 0' | cec-client -s
-} elseif { $Orden == "TV OFF" } {
+} elseif { $Orden == "TVOFF" } {
 spawn ssh root@$Host echo 'standby 0' | cec-client -s
 }
 
