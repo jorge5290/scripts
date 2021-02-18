@@ -9,6 +9,10 @@ spawn ssh root@172.16.15.$Host kodi-send --action=Powerdown
 spawn ssh root@172.16.15.$Host kodi-send --action=CECActivateSource
 } elseif { $Orden == "TVOFF" } {
 spawn ssh root@172.16.15.$Host kodi-send --action=CECStandby
+} elseif { $Orden == "KODIOFF" } {
+spawn ssh root@172.16.15.$Host kodi-send --action=Pause --action=CECStandby
+} elseif { $Orden == "KODION" } {
+spawn ssh root@172.16.15.$Host kodi-send --action=SkipPrevious --action=CECActivateSource
 }
 
 match_max 100000
@@ -21,3 +25,4 @@ expect {
 }
 
 expect eof
+
