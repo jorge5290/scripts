@@ -4,11 +4,11 @@ set Host [exec bash -c {echo $(( $(hostname -I | awk '{print $1}' |  cut -d . -f
 set Orden [lindex $argv 0]
 
 if { $Orden == "APAGAR" } {
-spawn ssh root@172.16.15.$Host shutdown -h now
+spawn ssh root@172.16.15.$Host kodi-send --action=Powerdown
 } elseif { $Orden == "TVON" } {
-spawn ssh root@172.16.15.$Host echo 'on 0' | cec-client -s
+spawn ssh root@172.16.15.$Host kodi-send --action=CECActivateSource
 } elseif { $Orden == "TVOFF" } {
-spawn ssh root@172.16.15.$Host echo 'standby 0' | cec-client -s
+spawn ssh root@172.16.15.$Host kodi-send --action=CECStandby
 }
 
 match_max 100000
