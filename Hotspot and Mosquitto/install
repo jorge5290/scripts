@@ -1,0 +1,148 @@
+#!/bin/bash
+# Raspberry Pi Wireless Hotspot Installation Script
+
+clear
+
+echo "======================================================="
+echo "======== Setting up Raspberry Pi WiFi hotspot ========="
+echo "======================================================="
+
+
+clear
+_PASSWORD1="0"
+_PASSWORD2="1"
+read -r -s -p "Please enter a new password at least 8 characters long (length is not checked): " _PASSWORD1
+echo
+read -r -s -p "Please enter the new password again: " _PASSWORD2
+echo
+while [ ${_PASSWORD1} != ${_PASSWORD2} ]
+do
+	echo "Password mismatch please try again."
+	read -r -s -p "Please enter a new password at least 8 characters long (length is not checked): " _PASSWORD1
+	echo
+	read -r -s -p "Please enter the new password again: " _PASSWORD2
+	echo
+done
+read -r -p "Please enter a new ssid: " _SSID
+# Sentry for the channel selection
+_SENTRY="0"
+while [ ${_SENTRY} != "1" ]
+do
+	read -r -p "Please enter a new channel from 1 to 11: " _CHANNEL
+	if [ ${_CHANNEL} == ${_CHANNEL//[^0-9]/} ] && [ ${_CHANNEL} -lt 12 ]  && [ ${_CHANNEL} -gt 0 ]
+	then
+		echo "You selected channel $_CHANNEL."
+		_SENTRY="1"
+	else
+		echo "Invalid entry received of ${_CHANNEL} ."
+	fi
+done
+
+
+
+
+echo "Updating package lists"
+
+apt-get -y -qq update
+
+echo "Installing dependencies"
+
+apt-get -y -qq install hostapd udhcpd
+
+echo "Instalando Broker Mosquitto"
+apt install -y mosquitto mosquitto-clients
+systemctl enable mosquitto.service
+
+####################################################################
+# check for and back up existing config files
+####################################################################
+echo "Backing up existing config files"
+
+readonly CONFIG_FILES=(/etc/udhcpd.conf
+	/etc/default/udhcpd
+	/etc/network/interfaces
+	/etc/hostapd/hostapd.conf
+	/etc/default/hostapd
+	/etc/sysctl.conf
+	/etc/iptables.ipv4.nat)
+
+for c in ${CONFIG_FILES[*]};
+do
+	if [ -f ${c} ]
+	then
+		cp -i ${c} ${c}.old
+	fi
+done
+
+echo "Config Files backed up"
+
+####################################################################
+# copy configs to relevant directories
+####################################################################
+
+echo "Configuring DHCP"
+
+echo "No other DNS servers available to choose from. Reverting to Google DNS."
+cp ./config-files/udhcpd_google.conf /etc/udhcpd.conf
+
+# Copy in the config file to enable udhcpd
+cp ./config-files/udhcpd /etc/default
+# Copy in the systemd udhcpd.service file
+cp ./config-files/udhcpd.service /lib/systemd/system/
+# Tell systemd to enable the udhcpd.service
+systemctl enable udhcpd.service
+
+echo "Configuring interfaces"
+cp ./config-files/interfaces /etc/network
+echo "Configuring hostapd"
+readonly DEFAULTPWD="0123456789A"
+readonly DEFAULTSSID="RaspberryPiFi"
+readonly DEFAULTCHANNEL=8
+	
+CONTENTS=$(<./config-files/hostapd.conf)
+CONTENTS=${CONTENTS//wpa_passphrase=${DEFAULTPWD}/wpa_passphrase=${_PASSWORD1}}
+CONTENTS=${CONTENTS//ssid=${DEFAULTSSID}/ssid=${_SSID}}
+CONTENTS=${CONTENTS//channel=${DEFAULTCHANNEL}/channel=${_CHANNEL}}
+echo "${CONTENTS}" > /etc/hostapd/hostapd.conf
+
+cp ./config-files/hostapd /etc/default
+
+echo "Configuring NAT"
+cp ./config-files/sysctl.conf /etc
+
+echo "Configuring iptables"
+cp ./config-files/iptables.ipv4.nat /etc
+
+touch /var/lib/misc/udhcpd.leases
+
+#-------------------------------------------------------
+sudo systemctl stop dnsmasq
+sudo systemctl stop hostapd
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
+sudo systemctl start hostapd
+sudo systemctl start dnsmasq
+#---------------------------------------
+
+
+echo "Initialising access point"
+service hostapd start
+update-rc.d hostapd enable
+
+echo "Initialising DHCP server"
+service udhcpd start
+update-rc.d udhcpd enable
+
+
+echo "================================================================"
+echo "=================== Configuration complete! ===================="
+echo "================================================================"
+
+echo "+++++++++++++++++  REBOOTING in 10 SECONDS  ++++++++++++++++++++"
+echo "++++++++++++++++++++++ CTL-C to cancel ++++++++++++++++++++++++"
+
+sleep 10
+reboot
+
+exit 0
+
